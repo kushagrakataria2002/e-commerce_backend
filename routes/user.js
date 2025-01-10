@@ -104,13 +104,14 @@ router.post("/login", async (req, res) => {
 
                     else {
 
-                        const token = jwt.sign({ token: user._id }, process.env.JWT_SECRET, { noTimestamp: true });
+                        const token = jwt.sign( {token : user._id},process.env.JWT_SECRET, {noTimestamp:true}); 
+
+                        res.cookie("token", token, {httpOnly: true, secure:true, sameSite:"Strict"}); 
 
                         res.status(200).json({
                             success: true,
-                            message: `Welcome ${user.username}`,
-                            token
-                        })
+                            message: `Welcome ${user.username}`
+                        }); 
                     }
                 }
             }
@@ -124,46 +125,97 @@ router.post("/login", async (req, res) => {
 router.get("/profile", async (req, res) => {
 
     try {
-        const token = req.headers["token"];
+        
+        const {token} = req.cookies; 
 
-        if (!token) {
-            res.status(401).json({
-                success: false,
-                message: "Not logged in",
-            });
+        if(!token){
+
+            res.status(400).json({
+                success:false, 
+                message:"Not logged in"
+            }); 
+
         }
 
-        else {
+        else{
 
-            const jwt_token = token.split(" ")[1];
+            const decoded = jwt.verify(token,process.env.JWT_SECRET); 
 
-            if (!jwt_token) {
+            if(!decoded){
+
                 res.status(400).json({
-                    success: false,
-                    message: "Token is not valid"
-                });
+                    success:false, 
+                    message:"Invalid token"
+                }); 
+
             }
 
-            const decoded = jwt.verify(jwt_token, process.env.JWT_SECRET);
+            else{
 
-            const user_id = decoded.token;
+                const user_id = decoded.token; 
 
-            const user = await user_model.findById(user_id).select("-password"); // this will not send password as a response
+                const user = await user_model.findById(user_id); 
 
-            res.status(200).json({
-                success: true,
-                user
-            })
+                res.status(200).json({
+                    success:true, 
+                    username:user.username,
+                    email:user.email
+                }); 
+
+            }
 
         }
 
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            success: false,
-            message: "Internal server error",
-        });
+        console.log(error); 
     }
 });
+
+router.post("/logout", async(req,res) =>{
+
+    try {
+        
+        const {token} = req.cookies; 
+
+        if(!token){
+
+            res.status(400).json({
+                success:false, 
+                message:"Not logged in"
+            }); 
+
+        }
+
+        else{
+
+            const decoded = jwt.verify(token, process.env.JWT_SECRET); 
+
+            if(!decoded){
+
+                res.status(400).josn({
+                    success:false, 
+                    message:"Invalid token"
+                }); 
+
+            }
+
+            else{
+
+                res.clearCookie("token",{httpOnly: true, secure: true, sameSite: "none"}); 
+
+                res.status(200).json({
+                    success:true, 
+                    message:"Logged out"
+                }); 
+
+            }
+
+        }
+
+    } catch (error) {
+        console.log(error); 
+    }
+
+}); 
 
 module.exports = router; 

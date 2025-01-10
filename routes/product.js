@@ -20,51 +20,54 @@ router.post("/new",async(req,res) =>{
 
         else{
 
-            const token = req.headers["token"]; 
+            const {token} = req.cookies; 
 
             if(!token){
+
                 res.status(400).json({
-                    success:false,
+                    success:false, 
                     message:"Not logged in"
                 }); 
+
             }
 
             else{
 
-                const jwt_token = token.split(" ")[1]; 
+                const decoded = jwt.verify(token, process.env.JWT_SECRET); 
 
-                if(!jwt_token){
+                if(!decoded){
+
                     res.status(400).json({
-                        success:false,
+                        success:false, 
                         message:"Invalid token"
                     }); 
+
                 }
 
                 else{
 
-                    const decoded = jwt.verify(jwt_token,process.env.JWT_SECRET);
-
                     const user_id = decoded.token; 
 
-                    const user = await user_model.findById(user_id); 
+                    const user = await user_model.findById(user_id);
 
                     if(user.is_admin === true){
 
-                    const product = await product_model.create({image, name, price, category, description, created_by: user_id}); 
+                        await product_model.create({image, name, price, category, description, created_by: user._id}); 
 
-                    res.status(201).json({
-                        success:true, 
-                        message:"Product created", 
-                        product
-                    }); 
+                        res.status(201).json({
+                            success:true, 
+                            message:"Product created"
+                        }); 
 
                     }
 
                     else{
+
                         res.status(400).json({
                             success:false, 
-                            message:"Only admins are allowed to create new products"
+                            message:"Only admins are allowed to create products"
                         }); 
+
                     }
 
                 }
@@ -164,7 +167,7 @@ router.put("/update/:id",async(req,res) =>{
 
             else{
 
-                const token = req.headers["token"]; 
+                const {token} = req.cookies; 
 
                 if(!token){
                     res.status(400).json({
@@ -174,10 +177,8 @@ router.put("/update/:id",async(req,res) =>{
                 }
 
                 else{
-                    
-                    const jwt_token = token.split(" ")[1]; 
 
-                    const decoded = jwt.verify(jwt_token,process.env.JWT_SECRET); 
+                    const decoded = jwt.verify(token,process.env.JWT_SECRET); 
 
                     if(!decoded){
                         res.status(400).json({
@@ -227,7 +228,7 @@ router.delete("/delete/:id",async(req,res) =>{
 
     try {
         
-        const token = req.headers["token"]; 
+        const {token} = req.cookies; 
 
         if(!token){
             res.status(400).json({
@@ -238,18 +239,18 @@ router.delete("/delete/:id",async(req,res) =>{
 
         else{
 
-            const jwt_token = token.split(" ")[1]; 
+            const decoded = jwt.verify(token, process.env.JWT_SECRET); 
 
-            if(!jwt_token){
-                res.json({
+            if(!decoded){
+
+                res.status(400).json({
                     success:false, 
-                    message:"Token not found"
+                    message:"Invalid token"
                 }); 
+
             }
 
             else{
-
-                const decoded = jwt.verify(jwt_token,process.env.JWT_SECRET); 
 
                 const user_id = decoded.token; 
 
@@ -260,10 +261,12 @@ router.delete("/delete/:id",async(req,res) =>{
                     const {id} = req.params; 
 
                     if(!id){
+
                         res.status(400).json({
                             success:false, 
                             message:"Please enter product id"
                         }); 
+
                     }
 
                     else{
@@ -271,23 +274,25 @@ router.delete("/delete/:id",async(req,res) =>{
                         let product = await product_model.findById(id); 
 
                         if(!product){
+
                             res.status(400).json({
                                 success:false, 
-                                message:"Invalid product id"
+                                message:"Product not found"
                             }); 
+
                         }
 
                         else{
 
                             await product.deleteOne(); 
-                            res.json({
+                            res.status(200).json({
                                 success:true, 
                                 message:"Product deleted"
-                            }); 
+                            });
 
                         }
 
-                    }
+                    } 
 
                 }
 

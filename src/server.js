@@ -6,12 +6,14 @@ require("./connecting_db.js");
 const cors = require("cors"); 
 const product_router = require("../routes/product.js"); 
 const cart_router = require("../routes/cart.js"); 
+const cookie_parser = require("cookie-parser"); 
 
 //creating a server 
 
 const app = express(); 
 
-app.use(cors()); 
+app.use(cookie_parser()); 
+app.use(cors( {origin: "http://localhost:3000",credentials: true} )); 
 app.use(body_parser.urlencoded({extended:true})); 
 app.use(express.json()); 
 app.use('/user',user_router); 
