@@ -13,7 +13,7 @@ const cookie_parser = require("cookie-parser");
 const app = express(); 
 
 app.use(cookie_parser()); 
-app.use(cors( {origin: "http://localhost:3000",credentials: true} )); 
+app.use(cors( {origin: "https://e-commerce-frontend-ydiy.onrender.com",credentials: true} )); 
 app.use(body_parser.urlencoded({extended:true})); 
 app.use(express.json()); 
 app.use('/user',user_router); 
